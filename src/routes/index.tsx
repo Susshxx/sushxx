@@ -1,29 +1,102 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { listProjects } from "@/lib/projects.functions";
+import { listExperiences } from "@/lib/experiences.functions";
+import { getSectionsVisibility } from "@/lib/settings.functions";
+import { HeroStage } from "@/components/site/hero/HeroStage";
+import { ThemeToggleDot } from "@/components/site/ThemeToggleDot";
+import { ProjectGrid } from "@/components/site/grid/ProjectGrid";
+import { ExperienceList } from "@/components/site/experience/ExperienceList";
+import { ContactForm } from "@/components/site/contact/ContactForm";
+import { Footer } from "@/components/site/Footer";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Your App" },
-      { name: "description", content: "Replace this with a one-sentence description of your app." },
-      { property: "og:title", content: "Your App" },
-      { property: "og:description", content: "Replace this with a one-sentence description of your app." },
+      { title: "Sush — Designing. Building. Shipping." },
+      {
+        name: "description",
+        content:
+          "Sush is a designer and engineer. Selected projects, experience, and how to get in touch.",
+      },
+      { property: "og:title", content: "Sush — Designing. Building. Shipping." },
+      {
+        property: "og:description",
+        content: "Selected projects, experience, and how to get in touch.",
+      },
     ],
   }),
+  loader: async () => {
+    const [projects, experiences, settings] = await Promise.all([
+      listProjects(),
+      listExperiences(),
+      getSectionsVisibility(),
+    ]);
+    return {
+      projects: projects.projects,
+      experiences: experiences.experiences,
+      visibility: settings.visibility,
+    };
+  },
+  errorComponent: ({ error }) => (
+    <div className="bg-bg text-fg flex min-h-screen items-center justify-center p-10">
+      <p className="text-muted text-sm">Could not load the site: {error.message}</p>
+    </div>
+  ),
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
 function Index() {
+  const { projects, experiences, visibility } = Route.useLoaderData();
+
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
+    <main className="bg-bg text-fg relative">
+      <ThemeToggleDot />
+      <HeroStage />
+
+      {visibility.projects ? (
+        <section id="projects" className="border-line border-t px-6 py-24 sm:px-10 md:py-32">
+          <div className="mx-auto max-w-6xl">
+            <header className="mb-12 flex items-baseline justify-between">
+              <h2 className="font-display text-4xl italic md:text-5xl">Selected work</h2>
+              <span className="text-muted text-xs uppercase tracking-[0.18em]">
+                {String(projects.length).padStart(2, "0")} projects
+              </span>
+            </header>
+            <ProjectGrid projects={projects} />
+          </div>
+        </section>
+      ) : null}
+
+      {visibility.experience ? (
+        <section id="experience" className="border-line border-t px-6 py-24 sm:px-10 md:py-32">
+          <div className="mx-auto max-w-6xl">
+            <header className="mb-12 flex items-baseline justify-between">
+              <h2 className="font-display text-4xl italic md:text-5xl">Experience</h2>
+              <span className="text-muted text-xs uppercase tracking-[0.18em]">
+                A working timeline
+              </span>
+            </header>
+            <ExperienceList initial={experiences} />
+          </div>
+        </section>
+      ) : null}
+
+      {visibility.contact ? (
+        <section id="contact" className="border-line border-t px-6 py-24 sm:px-10 md:py-32">
+          <div className="mx-auto grid max-w-6xl gap-12 md:grid-cols-[1fr_1fr]">
+            <div>
+              <h2 className="font-display text-4xl italic md:text-5xl">Get in touch</h2>
+              <p className="text-muted mt-4 max-w-md text-sm leading-relaxed">
+                Open to design and engineering collaborations, freelance work, and the
+                occasional weird idea. Drop a note.
+              </p>
+            </div>
+            <ContactForm />
+          </div>
+        </section>
+      ) : null}
+
+      <Footer />
+    </main>
   );
 }
