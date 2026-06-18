@@ -1,11 +1,32 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
 import { upsertProject, deleteProject } from "@/lib/projects.functions";
+import { uploadProjectMedia } from "@/lib/uploads.functions";
 
 type Project = Tables<"projects">;
+
+function slugify(s: string) {
+  return s
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+async function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(reader.error);
+    reader.onload = () => {
+      const result = reader.result as string;
+      resolve(result.split(",")[1] ?? "");
+    };
+    reader.readAsDataURL(file);
+  });
+}
 
 export function ProjectEditorDialog({
   project,
@@ -28,19 +49,55 @@ export function ProjectEditorDialog({
     sort_order: 0,
     ...project,
   });
+  // Keep tech as raw text while typing so commas/spaces aren't eaten.
+  const [techText, setTechText] = useState<string>((project.tech ?? []).join(", "));
   const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState<"cover" | "video" | null>(null);
   const upsert = useServerFn(upsertProject);
+  const upload = useServerFn(uploadProjectMedia);
+  const coverInput = useRef<HTMLInputElement | null>(null);
+  const videoInput = useRef<HTMLInputElement | null>(null);
+
+  const handleFile = async (kind: "cover" | "video", file: File | undefined) => {
+    if (!file) return;
+    setUploading(kind);
+    try {
+      const base64 = await fileToBase64(file);
+      const { url } = await upload({
+        data: { filename: file.name, contentType: file.type || "application/octet-stream", base64 },
+      });
+      setDraft((d) => ({ ...d, [kind === "cover" ? "cover_url" : "video_url"]: url }));
+      toast.success(`${kind === "cover" ? "Cover" : "Video"} uploaded`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setUploading(null);
+    }
+  };
 
   const onSave = async () => {
+    const tech = techText
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const slug = (draft.slug || slugify(draft.title || "")).trim();
+    if (!slug || !/^[a-z0-9-]+$/.test(slug)) {
+      toast.error("Slug must be lowercase letters, numbers and dashes");
+      return;
+    }
+    if (!(draft.title || "").trim()) {
+      toast.error("Title is required");
+      return;
+    }
     setBusy(true);
     try {
       await upsert({
         data: {
           id: draft.id,
-          slug: (draft.slug || "").trim(),
+          slug,
           title: (draft.title || "").trim(),
           description: draft.description || "",
-          tech: draft.tech || [],
+          tech,
           cover_url: draft.cover_url || null,
           video_url: draft.video_url || null,
           link_url: draft.link_url || null,
@@ -52,7 +109,7 @@ export function ProjectEditorDialog({
       onSaved();
       onClose();
     } catch (e) {
-      toast.error((e as Error).message);
+      toast.error((e as Error).message || "Failed to save");
     } finally {
       setBusy(false);
     }
@@ -65,19 +122,27 @@ export function ProjectEditorDialog({
           {draft.id ? "Edit project" : "New project"}
         </h3>
         <div className="grid gap-3">
+          <Field label="Title">
+            <input
+              className="input"
+              value={draft.title ?? ""}
+              onChange={(e) => {
+                const title = e.target.value;
+                setDraft((d) => ({
+                  ...d,
+                  title,
+                  // auto-fill slug while it's empty or matches the old auto value
+                  slug: !d.id && (!d.slug || d.slug === slugify(d.title || "")) ? slugify(title) : d.slug,
+                }));
+              }}
+            />
+          </Field>
           <Field label="Slug">
             <input
               className="input"
               value={draft.slug ?? ""}
               onChange={(e) => setDraft({ ...draft, slug: e.target.value })}
               placeholder="my-project"
-            />
-          </Field>
-          <Field label="Title">
-            <input
-              className="input"
-              value={draft.title ?? ""}
-              onChange={(e) => setDraft({ ...draft, title: e.target.value })}
             />
           </Field>
           <Field label="Description">
@@ -91,33 +156,85 @@ export function ProjectEditorDialog({
           <Field label="Tech (comma-separated)">
             <input
               className="input"
-              value={(draft.tech ?? []).join(", ")}
-              onChange={(e) =>
-                setDraft({
-                  ...draft,
-                  tech: e.target.value
-                    .split(",")
-                    .map((s) => s.trim())
-                    .filter(Boolean),
-                })
-              }
+              value={techText}
+              onChange={(e) => setTechText(e.target.value)}
+              placeholder="React, TypeScript, Motion"
             />
           </Field>
-          <Field label="Cover URL">
-            <input
-              className="input"
-              value={draft.cover_url ?? ""}
-              onChange={(e) => setDraft({ ...draft, cover_url: e.target.value })}
-              placeholder="https://…"
-            />
+          <Field label="Cover image">
+            <div className="grid gap-2">
+              <div className="flex items-center gap-2">
+                <input
+                  ref={coverInput}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => handleFile("cover", e.target.files?.[0])}
+                />
+                <button
+                  type="button"
+                  onClick={() => coverInput.current?.click()}
+                  disabled={uploading === "cover"}
+                  className="border-line rounded border px-3 py-1.5 text-xs uppercase tracking-wider"
+                >
+                  {uploading === "cover" ? "Uploading…" : "Upload image"}
+                </button>
+                {draft.cover_url ? (
+                  <button
+                    type="button"
+                    onClick={() => setDraft({ ...draft, cover_url: "" })}
+                    className="text-muted text-xs underline-offset-4 hover:underline"
+                  >
+                    Remove
+                  </button>
+                ) : null}
+              </div>
+              <input
+                className="input"
+                value={draft.cover_url ?? ""}
+                onChange={(e) => setDraft({ ...draft, cover_url: e.target.value })}
+                placeholder="…or paste an https URL"
+              />
+              {draft.cover_url ? (
+                <img src={draft.cover_url} alt="" className="border-line max-h-28 rounded border object-cover" />
+              ) : null}
+            </div>
           </Field>
-          <Field label="Video URL">
-            <input
-              className="input"
-              value={draft.video_url ?? ""}
-              onChange={(e) => setDraft({ ...draft, video_url: e.target.value })}
-              placeholder="https://…"
-            />
+          <Field label="Video">
+            <div className="grid gap-2">
+              <div className="flex items-center gap-2">
+                <input
+                  ref={videoInput}
+                  type="file"
+                  accept="video/*"
+                  className="hidden"
+                  onChange={(e) => handleFile("video", e.target.files?.[0])}
+                />
+                <button
+                  type="button"
+                  onClick={() => videoInput.current?.click()}
+                  disabled={uploading === "video"}
+                  className="border-line rounded border px-3 py-1.5 text-xs uppercase tracking-wider"
+                >
+                  {uploading === "video" ? "Uploading…" : "Upload video"}
+                </button>
+                {draft.video_url ? (
+                  <button
+                    type="button"
+                    onClick={() => setDraft({ ...draft, video_url: "" })}
+                    className="text-muted text-xs underline-offset-4 hover:underline"
+                  >
+                    Remove
+                  </button>
+                ) : null}
+              </div>
+              <input
+                className="input"
+                value={draft.video_url ?? ""}
+                onChange={(e) => setDraft({ ...draft, video_url: e.target.value })}
+                placeholder="…or paste an https URL"
+              />
+            </div>
           </Field>
           <Field label="External link">
             <input
