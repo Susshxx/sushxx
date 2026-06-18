@@ -2,6 +2,7 @@
 import { useRef } from "react";
 import { IndexItem } from "./IndexItem";
 import { useProgressEffect } from "./scroll-progress";
+import type { Tables } from "@/integrations/supabase/types";
 
 const ITEMS: { label: string; x: number; y: number; rotate?: number }[] = [
   { label: "Aurora OS", x: -30, y: -28, rotate: -4 },
@@ -23,9 +24,15 @@ const SOCIAL = [
   { label: "Whatsapp", href: "#" },
 ];
 
-export function HeroOverlayContent() {
+export function HeroOverlayContent({ projects = [] }: { projects?: Tables<"projects">[] }) {
   const overlayRef = useRef<HTMLDivElement | null>(null);
   const wordmarkRef = useRef<HTMLHeadingElement | null>(null);
+
+  const slugByLabel = new Map<string, string>();
+  for (const p of projects) {
+    slugByLabel.set(p.title.toLowerCase(), p.slug);
+  }
+
 
   useProgressEffect((p) => {
     // Fade everything (except the canvas) toward the end of the scrub.
@@ -65,6 +72,7 @@ export function HeroOverlayContent() {
           label={it.label}
           scatter={{ x: it.x, y: it.y }}
           rotate={it.rotate}
+          slug={slugByLabel.get(it.label.toLowerCase()) ?? null}
         />
       ))}
 
