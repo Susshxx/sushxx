@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { ScrollProgressProvider, useScrollProgress } from "./scroll-progress";
 import { HeroFrameCanvas } from "./HeroFrameCanvas";
 import { HeroOverlayContent } from "./HeroOverlayContent";
+import type { Tables } from "@/integrations/supabase/types";
 
 /** Detects coarse-pointer/small-viewport/reduced-motion to disable scrub. */
 function useShouldScrub() {
@@ -15,12 +16,11 @@ function useShouldScrub() {
   return enabled;
 }
 
-function PinnedScrub() {
+function PinnedScrub({ projects }: { projects: Tables<"projects">[] }) {
   const { publish } = useScrollProgress();
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const lenisRef = useRef<unknown>(null);
 
-  // Lenis smooth scroll.
   useEffect(() => {
     let mounted = true;
     let lenis: { raf: (t: number) => void; destroy: () => void } | null = null;
@@ -50,7 +50,6 @@ function PinnedScrub() {
     };
   }, []);
 
-  // Compute progress from scroll position within the wrapper.
   useEffect(() => {
     const el = wrapperRef.current;
     if (!el) return;
@@ -70,27 +69,25 @@ function PinnedScrub() {
   return (
     <section
       ref={wrapperRef}
-      // 350vh of scroll distance for the pinned hero.
       style={{ height: "350vh" }}
       className="relative bg-bg text-fg"
     >
       <div className="sticky top-0 h-screen w-full overflow-hidden">
         <HeroFrameCanvas />
-        <HeroOverlayContent />
+        <HeroOverlayContent projects={projects} />
       </div>
     </section>
   );
 }
 
-function StaticHero() {
-  // Mobile / reduced-motion fallback: show last frame + overlay (no scrub).
+function StaticHero({ projects }: { projects: Tables<"projects">[] }) {
   return (
     <section className="relative min-h-screen w-full bg-bg text-fg">
       <div className="relative h-screen w-full overflow-hidden">
         <ScrollProgressProvider>
           <StaticOnce />
           <HeroFrameCanvas />
-          <HeroOverlayContent />
+          <HeroOverlayContent projects={projects} />
         </ScrollProgressProvider>
       </div>
     </section>
@@ -105,12 +102,12 @@ function StaticOnce() {
   return null;
 }
 
-export function HeroStage() {
+export function HeroStage({ projects = [] }: { projects?: Tables<"projects">[] }) {
   const scrub = useShouldScrub();
-  if (!scrub) return <StaticHero />;
+  if (!scrub) return <StaticHero projects={projects} />;
   return (
     <ScrollProgressProvider>
-      <PinnedScrub />
+      <PinnedScrub projects={projects} />
     </ScrollProgressProvider>
   );
 }
