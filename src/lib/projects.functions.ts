@@ -7,9 +7,9 @@ const ProjectInput = z.object({
   title: z.string().min(1),
   description: z.string().default(""),
   tech: z.array(z.string()).default([]),
-  cover_url: z.string().url().nullable().optional(),
-  video_url: z.string().url().nullable().optional(),
-  link_url: z.string().url().nullable().optional(),
+  cover_url: z.string().nullable().optional(),
+  video_url: z.string().nullable().optional(),
+  link_url: z.string().nullable().optional(),
   featured: z.boolean().default(true),
   sort_order: z.number().int().default(0),
 });
