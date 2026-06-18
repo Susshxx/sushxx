@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { ScrollProgressProvider, useScrollProgress } from "./scroll-progress";
 import { HeroFrameCanvas } from "./HeroFrameCanvas";
 import { HeroOverlayContent } from "./HeroOverlayContent";
+import type { Tables } from "@/integrations/supabase/types";
 
 /** Detects coarse-pointer/small-viewport/reduced-motion to disable scrub. */
 function useShouldScrub() {
