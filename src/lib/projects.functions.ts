@@ -12,6 +12,9 @@ const ProjectInput = z.object({
   link_url: z.string().nullable().optional(),
   featured: z.boolean().default(true),
   sort_order: z.number().int().default(0),
+  hero_x: z.number().nullable().optional(),
+  hero_y: z.number().nullable().optional(),
+  hero_rotate: z.number().nullable().optional(),
 });
 
 export const listProjects = createServerFn({ method: "GET" }).handler(async () => {
@@ -53,6 +56,33 @@ export const upsertProject = createServerFn({ method: "POST" })
       .single();
     if (error) throw new Error(error.message);
     return { project: row };
+  });
+
+export const setHeroPosition = createServerFn({ method: "POST" })
+  .inputValidator((input) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        hero_x: z.number().nullable(),
+        hero_y: z.number().nullable(),
+        hero_rotate: z.number().nullable().optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data }) => {
+    const { requireAdminSession } = await import("./admin-session.server");
+    requireAdminSession();
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("projects")
+      .update({
+        hero_x: data.hero_x,
+        hero_y: data.hero_y,
+        hero_rotate: data.hero_rotate ?? null,
+      })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
   });
 
 export const deleteProject = createServerFn({ method: "POST" })

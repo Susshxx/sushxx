@@ -4,13 +4,28 @@ export function Footer() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <span>Sush · Portfolio · 2026</span>
         <div className="flex gap-6">
-          <a href="#" className="hover:text-fg">
+          <a
+            href="https://github.com/Susshxx"
+            target="_blank"
+            rel="noreferrer"
+            className="hover:text-fg"
+          >
             Github
           </a>
-          <a href="#" className="hover:text-fg">
+          <a
+            href="https://www.linkedin.com/in/sushanta-marahatta"
+            target="_blank"
+            rel="noreferrer"
+            className="hover:text-fg"
+          >
             LinkedIn
           </a>
-          <a href="#" className="hover:text-fg">
+          <a
+            href="https://wa.me/9779826160838"
+            target="_blank"
+            rel="noreferrer"
+            className="hover:text-fg"
+          >
             Whatsapp
           </a>
         </div>
