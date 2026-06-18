@@ -4,35 +4,39 @@ import { IndexItem } from "./IndexItem";
 import { useProgressEffect } from "./scroll-progress";
 import type { Tables } from "@/integrations/supabase/types";
 
+/** Default positions (percentages of the hero canvas) when a project has none saved. */
 const SCATTER: { x: number; y: number; rotate: number }[] = [
-  { x: -30, y: -28, rotate: -4 },
-  { x: 28, y: -22, rotate: 3 },
-  { x: -34, y: 12, rotate: 2 },
-  { x: 32, y: 18, rotate: -3 },
-  { x: -18, y: 30, rotate: 5 },
-  { x: 20, y: 32, rotate: -2 },
-  { x: -38, y: -8, rotate: 4 },
-  { x: 36, y: -2, rotate: -5 },
-  { x: 0, y: -34, rotate: 0 },
-  { x: 0, y: 36, rotate: 0 },
+  { x: 18, y: 22, rotate: -4 },
+  { x: 78, y: 26, rotate: 3 },
+  { x: 14, y: 58, rotate: 2 },
+  { x: 82, y: 64, rotate: -3 },
+  { x: 28, y: 80, rotate: 5 },
+  { x: 70, y: 82, rotate: -2 },
+  { x: 10, y: 42, rotate: 4 },
+  { x: 86, y: 46, rotate: -5 },
+  { x: 48, y: 12, rotate: 0 },
+  { x: 52, y: 88, rotate: 0 },
 ];
 
 const SOCIAL = [
-  { label: "Reach out", href: "#" },
-  { label: "Github", href: "#" },
-  { label: "LinkedIn", href: "#" },
-  { label: "Whatsapp", href: "#" },
+  { label: "Reach out", href: "#contact" },
+  { label: "Github", href: "https://github.com/Susshxx" },
+  { label: "LinkedIn", href: "https://www.linkedin.com/in/sushanta-marahatta" },
+  { label: "Whatsapp", href: "https://wa.me/9779826160838" },
 ];
 
 export function HeroOverlayContent({ projects = [] }: { projects?: Tables<"projects">[] }) {
   const overlayRef = useRef<HTMLDivElement | null>(null);
   const wordmarkRef = useRef<HTMLHeadingElement | null>(null);
 
-  const items = projects.slice(0, SCATTER.length).map((p, i) => ({
-    label: p.title,
-    slug: p.slug,
-    ...SCATTER[i],
-  }));
+  const items = projects.map((p, i) => {
+    const fallback = SCATTER[i % SCATTER.length];
+    const x = p.hero_x != null ? Number(p.hero_x) : fallback.x;
+    const y = p.hero_y != null ? Number(p.hero_y) : fallback.y;
+    const rotate =
+      p.hero_rotate != null ? Number(p.hero_rotate) : fallback.rotate;
+    return { label: p.title, slug: p.slug, x, y, rotate };
+  });
 
 
   useProgressEffect((p) => {
