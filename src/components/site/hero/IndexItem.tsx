@@ -5,12 +5,13 @@ import { useProgressEffect } from "./scroll-progress";
 
 type Props = {
   label: string;
-  scatter: { x: number; y: number };
+  /** Position as percentages of the hero canvas (0..100). */
+  pos: { x: number; y: number };
   rotate?: number;
   slug?: string | null;
 };
 
-export function IndexItem({ label, scatter, rotate = 0, slug }: Props) {
+export function IndexItem({ label, pos, rotate = 0, slug }: Props) {
   const ref = useRef<HTMLDivElement | null>(null);
 
   useProgressEffect((p) => {
@@ -18,12 +19,15 @@ export function IndexItem({ label, scatter, rotate = 0, slug }: Props) {
     if (!el) return;
     const conv = Math.min(1, p / 0.85);
     const eased = 1 - Math.pow(1 - conv, 2);
-    const x = scatter.x * (1 - eased);
-    const y = scatter.y * (1 - eased);
+    // Lerp toward center (50,50).
+    const x = pos.x + (50 - pos.x) * eased;
+    const y = pos.y + (50 - pos.y) * eased;
     const rot = rotate * (1 - eased);
     const opacity = p > 0.85 ? Math.max(0, 1 - (p - 0.85) / 0.15) : 1;
     const blur = eased * 6;
-    el.style.transform = `translate3d(${x}vw, ${y}vh, 0) rotate(${rot}deg)`;
+    el.style.left = `${x}%`;
+    el.style.top = `${y}%`;
+    el.style.transform = `translate(-50%, -50%) rotate(${rot}deg)`;
     el.style.opacity = String(opacity);
     el.style.filter = blur > 0.05 ? `blur(${blur}px)` : "none";
   });
@@ -37,8 +41,13 @@ export function IndexItem({ label, scatter, rotate = 0, slug }: Props) {
   return (
     <div
       ref={ref}
-      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 will-change-transform"
-      style={{ pointerEvents: slug ? "auto" : "none" }}
+      className="absolute will-change-transform"
+      style={{
+        left: `${pos.x}%`,
+        top: `${pos.y}%`,
+        transform: `translate(-50%, -50%) rotate(${rotate}deg)`,
+        pointerEvents: slug ? "auto" : "none",
+      }}
     >
       {slug ? (
         <Link

@@ -77,6 +77,9 @@ export type Database = {
           created_at: string
           description: string
           featured: boolean
+          hero_rotate: number | null
+          hero_x: number | null
+          hero_y: number | null
           id: string
           link_url: string | null
           slug: string
@@ -91,6 +94,9 @@ export type Database = {
           created_at?: string
           description?: string
           featured?: boolean
+          hero_rotate?: number | null
+          hero_x?: number | null
+          hero_y?: number | null
           id?: string
           link_url?: string | null
           slug: string
@@ -105,6 +111,9 @@ export type Database = {
           created_at?: string
           description?: string
           featured?: boolean
+          hero_rotate?: number | null
+          hero_x?: number | null
+          hero_y?: number | null
           id?: string
           link_url?: string | null
           slug?: string
