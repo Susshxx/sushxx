@@ -11,6 +11,7 @@ import { ProjectsTable } from "@/components/admin/ProjectsTable";
 import { ExperiencesTable } from "@/components/admin/ExperiencesTable";
 import { MessagesTable } from "@/components/admin/MessagesTable";
 import { SectionsPanel } from "@/components/admin/SectionsPanel";
+import { HeroLayoutPanel } from "@/components/admin/HeroLayoutPanel";
 
 export const Route = createFileRoute("/admin")({
   ssr: false,
@@ -18,7 +19,7 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type Tab = "projects" | "experience" | "messages" | "sections";
+type Tab = "projects" | "hero" | "experience" | "messages" | "sections";
 
 function AdminPage() {
   const check = useServerFn(isAdmin);
@@ -61,6 +62,7 @@ function AdminAuthed({ onSignOut }: { onSignOut: () => void }) {
 
   const tabs: { id: Tab; label: string }[] = [
     { id: "projects", label: "Projects" },
+    { id: "hero", label: "Hero layout" },
     { id: "experience", label: "Experience" },
     { id: "messages", label: "Messages" },
     { id: "sections", label: "Sections" },
@@ -102,6 +104,12 @@ function AdminAuthed({ onSignOut }: { onSignOut: () => void }) {
       <div className="mx-auto max-w-5xl">
         {tab === "projects" ? (
           <ProjectsTable
+            projects={pQ.data?.projects ?? []}
+            onChanged={() => pQ.refetch()}
+          />
+        ) : null}
+        {tab === "hero" ? (
+          <HeroLayoutPanel
             projects={pQ.data?.projects ?? []}
             onChanged={() => pQ.refetch()}
           />
