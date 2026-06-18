@@ -30,7 +30,7 @@ export function ContactForm() {
   };
 
   return (
-    <form onSubmit={onSubmit} className="grid max-w-xl gap-4">
+    <form onSubmit={onSubmit} className="mx-auto grid w-full max-w-2xl gap-10">
       <input
         type="text"
         name="website"
@@ -41,40 +41,71 @@ export function ContactForm() {
         className="hidden"
         aria-hidden
       />
-      <div className="grid gap-4 md:grid-cols-2">
-        <input
-          required
-          placeholder="Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="border-line text-fg placeholder:text-muted border-b bg-transparent py-3 outline-none focus:border-fg"
-        />
-        <input
-          required
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="border-line text-fg placeholder:text-muted border-b bg-transparent py-3 outline-none focus:border-fg"
-        />
-      </div>
-      <textarea
-        required
-        placeholder="What are you working on?"
-        rows={5}
+      <FloatField label="Your name" value={name} onChange={setName} required />
+      <FloatField label="Email" type="email" value={email} onChange={setEmail} required />
+      <FloatField
+        label="Tell me about your project"
         value={message}
-        onChange={(e) => setMessage(e.target.value)}
-        className="border-line text-fg placeholder:text-muted border-b bg-transparent py-3 outline-none focus:border-fg"
+        onChange={setMessage}
+        as="textarea"
+        required
       />
       <div>
         <button
           disabled={busy}
           type="submit"
-          className="bg-fg text-bg inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm uppercase tracking-[0.18em] disabled:opacity-50"
+          className="border-fg text-fg hover:bg-fg hover:text-bg border px-8 py-4 text-xs uppercase tracking-[0.28em] transition-colors disabled:opacity-50"
         >
           {busy ? "Sending…" : "Send message"}
         </button>
       </div>
     </form>
+  );
+}
+
+function FloatField({
+  label,
+  value,
+  onChange,
+  type = "text",
+  required,
+  as,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  type?: string;
+  required?: boolean;
+  as?: "textarea";
+}) {
+  const [focused, setFocused] = useState(false);
+  const active = focused || value.length > 0;
+  const common = {
+    value,
+    onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+      onChange(e.target.value),
+    onFocus: () => setFocused(true),
+    onBlur: () => setFocused(false),
+    required,
+    className:
+      "text-fg w-full resize-none border-0 border-b border-line/60 bg-transparent pt-7 pb-2 text-base outline-none focus:border-fg transition-colors",
+  };
+  return (
+    <label className="relative block">
+      <span
+        className={`text-muted pointer-events-none absolute left-0 transition-all ${
+          active
+            ? "top-0 text-[10px] uppercase tracking-[0.22em]"
+            : "top-7 text-base"
+        }`}
+      >
+        {label}
+      </span>
+      {as === "textarea" ? (
+        <textarea rows={4} {...(common as React.TextareaHTMLAttributes<HTMLTextAreaElement>)} />
+      ) : (
+        <input type={type} {...(common as React.InputHTMLAttributes<HTMLInputElement>)} />
+      )}
+    </label>
   );
 }
