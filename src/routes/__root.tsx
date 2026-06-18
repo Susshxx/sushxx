@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
+import { MagneticCursor } from "@/components/site/MagneticCursor";
 
 const THEME_BOOT = `(() => {
   try {
@@ -128,6 +129,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
+      <MagneticCursor />
       <Toaster position="bottom-center" theme="dark" />
     </QueryClientProvider>
   );

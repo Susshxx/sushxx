@@ -73,9 +73,9 @@ export function HeroOverlayContent({ projects = [] }: { projects?: Tables<"proje
       {/* Scattered index entries */}
       {items.map((it) => (
         <IndexItem
-          key={it.label}
+          key={it.slug ?? it.label}
           label={it.label}
-          scatter={{ x: it.x, y: it.y }}
+          pos={{ x: it.x, y: it.y }}
           rotate={it.rotate}
           slug={it.slug}
         />
