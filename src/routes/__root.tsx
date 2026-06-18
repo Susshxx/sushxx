@@ -12,7 +12,6 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
-import { MagneticCursor } from "@/components/site/MagneticCursor";
 
 const THEME_BOOT = `(() => {
   try {
@@ -77,20 +76,26 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Sush — Designing. Building. Shipping." },
+      { title: "Sush - Portfolio." },
       {
         name: "description",
         content:
           "Portfolio of Sush — design and engineering work across product, brand, and motion.",
       },
       { name: "author", content: "Sush" },
-      { property: "og:title", content: "Sush — Designing. Building. Shipping." },
+      { property: "og:title", content: "Sush - Portfolio." },
       {
         property: "og:description",
         content: "Selected projects and experience.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "Sush - Portfolio." },
+      { name: "description", content: "A dynamic portfolio application showcasing projects, experience, and contact capabilities with interactive elements." },
+      { property: "og:description", content: "A dynamic portfolio application showcasing projects, experience, and contact capabilities with interactive elements." },
+      { name: "twitter:description", content: "A dynamic portfolio application showcasing projects, experience, and contact capabilities with interactive elements." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/2e2y1p9MXdbrTDxasoxFoPzkaWy1/social-images/social-1781758504485-Gemini_Generated_Image_6uq9b6uq9b6uq9b6.png_202606170108.webp" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/2e2y1p9MXdbrTDxasoxFoPzkaWy1/social-images/social-1781758504485-Gemini_Generated_Image_6uq9b6uq9b6uq9b6.png_202606170108.webp" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
@@ -129,7 +134,6 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
-      <MagneticCursor />
       <Toaster position="bottom-center" theme="dark" />
     </QueryClientProvider>
   );
