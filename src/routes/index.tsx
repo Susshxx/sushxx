@@ -82,16 +82,15 @@ function Index() {
       ) : null}
 
       {visibility.contact ? (
-        <section id="contact" className="border-line border-t px-6 py-24 sm:px-10 md:py-32">
-          <div className="mx-auto grid max-w-6xl gap-12 md:grid-cols-[1fr_1fr]">
-            <div>
-              <h2 className="font-display text-4xl italic md:text-5xl">Get in touch</h2>
-              <p className="text-muted mt-4 max-w-md text-sm leading-relaxed">
-                Open to design and engineering collaborations, freelance work, and the
-                occasional weird idea. Drop a note.
-              </p>
+        <section id="contact" className="border-line border-t px-6 py-24 sm:px-10 md:py-40">
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="text-muted mb-6 text-xs uppercase tracking-[0.28em]">Reach out</p>
+            <h2 className="font-display text-5xl italic md:text-7xl">
+              Let&apos;s build something.
+            </h2>
+            <div className="mt-16 text-left">
+              <ContactForm />
             </div>
-            <ContactForm />
           </div>
         </section>
       ) : null}
