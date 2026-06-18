@@ -51,7 +51,7 @@ function Index() {
   return (
     <main className="bg-bg text-fg relative">
       <ThemeToggleDot />
-      <HeroStage />
+      <HeroStage projects={projects} />
 
       {visibility.projects ? (
         <section id="projects" className="border-line border-t px-6 py-24 sm:px-10 md:py-32">
