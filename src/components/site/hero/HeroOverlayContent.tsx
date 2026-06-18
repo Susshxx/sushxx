@@ -4,17 +4,17 @@ import { IndexItem } from "./IndexItem";
 import { useProgressEffect } from "./scroll-progress";
 import type { Tables } from "@/integrations/supabase/types";
 
-const ITEMS: { label: string; x: number; y: number; rotate?: number }[] = [
-  { label: "Aurora OS", x: -30, y: -28, rotate: -4 },
-  { label: "Field Notes", x: 28, y: -22, rotate: 3 },
-  { label: "Lumen Studio", x: -34, y: 12, rotate: 2 },
-  { label: "Northwind", x: 32, y: 18, rotate: -3 },
-  { label: "Fjord & Loom", x: -18, y: 30, rotate: 5 },
-  { label: "Brand systems", x: 20, y: 32, rotate: -2 },
-  { label: "Motion library", x: -38, y: -8, rotate: 4 },
-  { label: "Case studies", x: 36, y: -2, rotate: -5 },
-  { label: "Generative UI", x: 0, y: -34, rotate: 0 },
-  { label: "Prototyping", x: 0, y: 36, rotate: 0 },
+const SCATTER: { x: number; y: number; rotate: number }[] = [
+  { x: -30, y: -28, rotate: -4 },
+  { x: 28, y: -22, rotate: 3 },
+  { x: -34, y: 12, rotate: 2 },
+  { x: 32, y: 18, rotate: -3 },
+  { x: -18, y: 30, rotate: 5 },
+  { x: 20, y: 32, rotate: -2 },
+  { x: -38, y: -8, rotate: 4 },
+  { x: 36, y: -2, rotate: -5 },
+  { x: 0, y: -34, rotate: 0 },
+  { x: 0, y: 36, rotate: 0 },
 ];
 
 const SOCIAL = [
@@ -28,10 +28,11 @@ export function HeroOverlayContent({ projects = [] }: { projects?: Tables<"proje
   const overlayRef = useRef<HTMLDivElement | null>(null);
   const wordmarkRef = useRef<HTMLHeadingElement | null>(null);
 
-  const slugByLabel = new Map<string, string>();
-  for (const p of projects) {
-    slugByLabel.set(p.title.toLowerCase(), p.slug);
-  }
+  const items = projects.slice(0, SCATTER.length).map((p, i) => ({
+    label: p.title,
+    slug: p.slug,
+    ...SCATTER[i],
+  }));
 
 
   useProgressEffect((p) => {
@@ -66,13 +67,13 @@ export function HeroOverlayContent({ projects = [] }: { projects?: Tables<"proje
       </h1>
 
       {/* Scattered index entries */}
-      {ITEMS.map((it) => (
+      {items.map((it) => (
         <IndexItem
           key={it.label}
           label={it.label}
           scatter={{ x: it.x, y: it.y }}
           rotate={it.rotate}
-          slug={slugByLabel.get(it.label.toLowerCase()) ?? null}
+          slug={it.slug}
         />
       ))}
 
