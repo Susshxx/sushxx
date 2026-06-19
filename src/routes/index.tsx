@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { listProjects } from "@/lib/projects.functions";
 import { listExperiences } from "@/lib/experiences.functions";
-import { getSectionsVisibility } from "@/lib/settings.functions";
+import { getSectionsVisibility, getSiteSettings } from "@/lib/settings.functions";
 import { HeroStage } from "@/components/site/hero/HeroStage";
 import { ThemeToggleDot } from "@/components/site/ThemeToggleDot";
 import { ProjectGrid } from "@/components/site/grid/ProjectGrid";
@@ -26,15 +26,17 @@ export const Route = createFileRoute("/")({
     ],
   }),
   loader: async () => {
-    const [projects, experiences, settings] = await Promise.all([
+    const [projects, experiences, sections, site] = await Promise.all([
       listProjects(),
       listExperiences(),
       getSectionsVisibility(),
+      getSiteSettings(),
     ]);
     return {
       projects: projects.projects,
       experiences: experiences.experiences,
-      visibility: settings.visibility,
+      visibility: sections.visibility,
+      site: site.settings,
     };
   },
   errorComponent: ({ error }) => (
@@ -46,12 +48,13 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const { projects, experiences, visibility } = Route.useLoaderData();
+  const { projects, experiences, visibility, site } = Route.useLoaderData();
 
   return (
     <main className="bg-bg text-fg relative">
       <ThemeToggleDot />
-      <HeroStage projects={projects} />
+      <HeroStage projects={projects} hero={site.hero} />
+
 
       {visibility.projects ? (
         <section id="projects" className="border-line border-t px-6 py-24 sm:px-10 md:py-32">
@@ -70,11 +73,23 @@ function Index() {
       {visibility.experience ? (
         <section id="experience" className="border-line border-t px-6 py-24 sm:px-10 md:py-32">
           <div className="mx-auto max-w-6xl">
-            <header className="mb-12 flex items-baseline justify-between">
+            <header className="mb-12 flex flex-wrap items-baseline justify-between gap-4">
               <h2 className="font-display text-4xl italic md:text-5xl">Experience</h2>
-              <span className="text-muted text-xs uppercase tracking-[0.18em]">
-                A working timeline
-              </span>
+              <div className="flex items-center gap-4">
+                {site.resume_url ? (
+                  <a
+                    href={site.resume_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="border-line hover:bg-fg hover:text-bg rounded border px-3 py-1.5 text-xs uppercase tracking-wider transition-colors"
+                  >
+                    Download résumé ↓
+                  </a>
+                ) : null}
+                <span className="text-muted text-xs uppercase tracking-[0.18em]">
+                  A working timeline
+                </span>
+              </div>
             </header>
             <ExperienceList initial={experiences} />
           </div>
