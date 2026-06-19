@@ -4,19 +4,30 @@ import { ScrollProgressProvider, useScrollProgress } from "./scroll-progress";
 import { HeroFrameCanvas } from "./HeroFrameCanvas";
 import { HeroOverlayContent } from "./HeroOverlayContent";
 import type { Tables } from "@/integrations/supabase/types";
+import type { HeroSettings } from "@/lib/settings.functions";
 
-/** Detects coarse-pointer/small-viewport/reduced-motion to disable scrub. */
+/** Only disable scrub for reduced-motion users; mobile gets scrub too. */
 function useShouldScrub() {
-  const [enabled, setEnabled] = useState<boolean>(false);
+  const [enabled, setEnabled] = useState<boolean>(true);
   useEffect(() => {
-    const isMobile = window.matchMedia("(max-width: 900px)").matches;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    setEnabled(!isMobile && !reduce);
+    setEnabled(!reduce);
   }, []);
   return enabled;
 }
 
-function PinnedScrub({ projects }: { projects: Tables<"projects">[] }) {
+type Props = {
+  projects?: Tables<"projects">[];
+  hero?: HeroSettings;
+};
+
+function PinnedScrub({
+  projects,
+  hero,
+}: {
+  projects: Tables<"projects">[];
+  hero?: HeroSettings;
+}) {
   const { publish } = useScrollProgress();
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const lenisRef = useRef<unknown>(null);
@@ -31,7 +42,11 @@ function PinnedScrub({ projects }: { projects: Tables<"projects">[] }) {
         duration: 1.0,
         smoothWheel: true,
         wheelMultiplier: 1.0,
-      }) as unknown as { raf: (t: number) => void; destroy: () => void };
+        syncTouch: true,
+      } as unknown as ConstructorParameters<typeof Lenis>[0]) as unknown as {
+        raf: (t: number) => void;
+        destroy: () => void;
+      };
       lenisRef.current = lenis;
       let rafId = 0;
       const tick = (t: number) => {
@@ -74,20 +89,26 @@ function PinnedScrub({ projects }: { projects: Tables<"projects">[] }) {
     >
       <div className="sticky top-0 h-screen w-full overflow-hidden">
         <HeroFrameCanvas />
-        <HeroOverlayContent projects={projects} />
+        <HeroOverlayContent projects={projects} hero={hero} />
       </div>
     </section>
   );
 }
 
-function StaticHero({ projects }: { projects: Tables<"projects">[] }) {
+function StaticHero({
+  projects,
+  hero,
+}: {
+  projects: Tables<"projects">[];
+  hero?: HeroSettings;
+}) {
   return (
     <section className="relative min-h-screen w-full bg-bg text-fg">
       <div className="relative h-screen w-full overflow-hidden">
         <ScrollProgressProvider>
           <StaticOnce />
           <HeroFrameCanvas />
-          <HeroOverlayContent projects={projects} />
+          <HeroOverlayContent projects={projects} hero={hero} />
         </ScrollProgressProvider>
       </div>
     </section>
@@ -102,12 +123,12 @@ function StaticOnce() {
   return null;
 }
 
-export function HeroStage({ projects = [] }: { projects?: Tables<"projects">[] }) {
+export function HeroStage({ projects = [], hero }: Props) {
   const scrub = useShouldScrub();
-  if (!scrub) return <StaticHero projects={projects} />;
+  if (!scrub) return <StaticHero projects={projects} hero={hero} />;
   return (
     <ScrollProgressProvider>
-      <PinnedScrub projects={projects} />
+      <PinnedScrub projects={projects} hero={hero} />
     </ScrollProgressProvider>
   );
 }
