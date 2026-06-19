@@ -1,9 +1,12 @@
 "use client";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
 import { upsertExperience, deleteExperience } from "@/lib/experiences.functions";
+import { getSiteSettings, setResumeUrl } from "@/lib/settings.functions";
+import { uploadProjectMedia } from "@/lib/uploads.functions";
 
 type Exp = Tables<"experiences">;
 const EMPTY: Partial<Exp> = { role: "", company: "", period: "", summary: "", sort_order: 0 };
@@ -16,8 +19,45 @@ export function ExperiencesTable({
   onChanged: () => void;
 }) {
   const [draft, setDraft] = useState<Partial<Exp> | null>(null);
+  const [uploading, setUploading] = useState(false);
   const upsert = useServerFn(upsertExperience);
   const del = useServerFn(deleteExperience);
+  const getSettings = useServerFn(getSiteSettings);
+  const saveResume = useServerFn(setResumeUrl);
+  const upload = useServerFn(uploadProjectMedia);
+  const settingsQ = useQuery({ queryKey: ["siteSettings"], queryFn: () => getSettings() });
+  const resumeUrl = settingsQ.data?.settings.resume_url ?? null;
+
+  const onResumeFile = async (file: File) => {
+    setUploading(true);
+    try {
+      const buf = await file.arrayBuffer();
+      const b64 = btoa(
+        new Uint8Array(buf).reduce((s, b) => s + String.fromCharCode(b), ""),
+      );
+      const { url } = await upload({
+        data: { filename: file.name, contentType: file.type || "application/pdf", base64: b64 },
+      });
+      await saveResume({ data: { url } });
+      toast.success("Resume uploaded");
+      settingsQ.refetch();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeResume = async () => {
+    if (!confirm("Remove resume?")) return;
+    try {
+      await saveResume({ data: { url: null } });
+      toast.success("Removed");
+      settingsQ.refetch();
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
 
   const save = async () => {
     if (!draft) return;
@@ -42,7 +82,7 @@ export function ExperiencesTable({
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h2 className="font-display text-2xl italic">Experience</h2>
         <button
           onClick={() => setDraft({ ...EMPTY })}
@@ -50,6 +90,47 @@ export function ExperiencesTable({
         >
           + New experience
         </button>
+      </div>
+
+      <div className="border-line mb-6 flex flex-wrap items-center justify-between gap-3 rounded border p-4">
+        <div className="text-sm">
+          <div className="text-muted text-xs uppercase tracking-wider">Résumé</div>
+          {resumeUrl ? (
+            <a
+              href={resumeUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline-offset-4 hover:underline"
+            >
+              View current resume ↗
+            </a>
+          ) : (
+            <span className="text-muted">No resume uploaded.</span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="border-line cursor-pointer rounded border px-3 py-1.5 text-xs uppercase tracking-wider">
+            {uploading ? "Uploading…" : resumeUrl ? "Replace" : "Upload"}
+            <input
+              type="file"
+              accept="application/pdf,image/*"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) onResumeFile(f);
+                e.target.value = "";
+              }}
+            />
+          </label>
+          {resumeUrl ? (
+            <button
+              onClick={removeResume}
+              className="border-line text-muted rounded border px-3 py-1.5 text-xs uppercase tracking-wider"
+            >
+              Remove
+            </button>
+          ) : null}
+        </div>
       </div>
       <div className="border-line divide-line divide-y rounded border">
         {experiences.map((e) => (
