@@ -63,9 +63,9 @@ export const setHeroPosition = createServerFn({ method: "POST" })
     z
       .object({
         id: z.string().uuid(),
-        hero_x: z.number().nullable(),
-        hero_y: z.number().nullable(),
-        hero_rotate: z.number().nullable().optional(),
+        device: z.enum(["desktop", "mobile"]).default("desktop"),
+        x: z.number().nullable(),
+        y: z.number().nullable(),
       })
       .parse(input),
   )
@@ -73,13 +73,13 @@ export const setHeroPosition = createServerFn({ method: "POST" })
     const { requireAdminSession } = await import("./admin-session.server");
     requireAdminSession();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const patch =
+      data.device === "mobile"
+        ? { hero_mobile_x: data.x, hero_mobile_y: data.y }
+        : { hero_x: data.x, hero_y: data.y };
     const { error } = await supabaseAdmin
       .from("projects")
-      .update({
-        hero_x: data.hero_x,
-        hero_y: data.hero_y,
-        hero_rotate: data.hero_rotate ?? null,
-      })
+      .update(patch)
       .eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true as const };
